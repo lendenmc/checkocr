@@ -10,6 +10,7 @@ from colorama import Fore
 
 
 class PDF(object):
+
     def __init__(self, directory, name):
         self.name = name
         self.directory = directory
@@ -21,10 +22,12 @@ class PDF(object):
                '/dev/stdout']
         content = subprocess.check_output(cmd)[:length]
         print("Name : {} \nContent: {}\n".format(self.name, repr(content)))
-        if not isinstance(content, str):
-            ### This condition is for python 3 portability reasons,
-            ### as python 3 check_ouput returns bytes instead of a string
-            content = content.decode('utf-8')
+        ### This condition is for python 3 portability reasons, as python 3
+        ### check_ouput returns bytes instead of a string. The 'ignore'
+        ### option is then used to prevent the UnicodeDecodeError  might
+        ### occur as the result of the 'content' bit-string being shortened
+        ### at the wrong place with the 'length' parameter.
+        content = content.decode('utf-8', 'ignore')
         return content
 
     def is_ocr(self, scanned_pages=15):
@@ -33,14 +36,11 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
         content = self.extract_content(scanned_pages=scanned_pages,
                                        length=len(warning))
         if content.startswith(warning):
-            print(Fore.RED + warning + Fore.RESET)
+            print(Fore.RED + warning + "\n")
+            print("Not accepted" + Fore.RESET)
             return
-        if not re.search('\w', content):
-            print(Fore.RED + "Not accepted" + Fore.RESET)
-            return
-        else:
-            return True
-        # return re.search('\w', content)
+        ### the re.UNICODE flag is needed for Python 2.7
+        return re.search('\w{4}', content, re.UNICODE)
 
     def copy(self, output_dir):
         pdf_copy = os.path.join(output_dir, self.name)
@@ -48,6 +48,7 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
 
 
 class PDFScanner(object):
+
     def __init__(self, scanned_pages):
         self.scanned_pages = scanned_pages
 
@@ -56,6 +57,7 @@ class PDFScanner(object):
             for goodfile in fnmatch.filter(files, '*.pdf'):
                 pdf = PDF(root, goodfile)
                 if not pdf.is_ocr(scanned_pages=self.scanned_pages):
+                    print(Fore.RED + "Not accepted" + Fore.RESET)
                     pdf.copy(output_dir)
 
 
