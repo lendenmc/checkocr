@@ -7,40 +7,72 @@ import fnmatch
 import time
 
 from colorama import Fore
+from PyPDF2 import PdfFileReader
 
 
-class PDF(object):
+class PDF(PdfFileReader):
 
     def __init__(self, directory, name):
         self.name = name
         self.directory = directory
         self.pathname = os.path.join(directory, name)
+        try:
+            super(self.__class__, self).__init__(self.pathname)
+            self.num_pages = self.numPages
+            # assign PdfFileReader.numPages to num_pages
+        except AssertionError:
+            self.num_pages = 0
 
-    def extract_content(self, scanned_pages=1, length=1):
-        print("--------------------------------------------------------------")
-        cmd = ['pdftotext', '-q', '-l', str(scanned_pages), self.pathname,
-               '/dev/stdout']
-        content = subprocess.check_output(cmd)[:length]
-        print("Name : {} \nContent: {}\n".format(self.name, repr(content)))
-        ### This condition is for python 3 portability reasons, as python 3
-        ### check_ouput returns bytes instead of a string. The 'ignore'
-        ### option is then used to prevent the UnicodeDecodeError  might
-        ### occur as the result of the 'content' bit-string being shortened
-        ### at the wrong place with the 'length' parameter.
-        content = content.decode('utf-8', 'ignore')
+    def extract_content(self, first_page, last_page):
+        cmd = ['pdftotext', '-q',
+               '-f', str(first_page),
+               '-l', str(last_page),
+               self.pathname, '/dev/stdout']
+        content = subprocess.check_output(cmd)
         return content
 
-    def is_ocr(self, scanned_pages=15):
-        warning = "\x0cPDF compression, OCR, web optimization using \
+    def is_ocr(self, max_scanned_pages, test_length):
+        treshold = max_scanned_pages * 2
+        ### This "treshold" (see bellow) is needed in order to get a content
+        ### sample that is more representive of longer pdfs such as ebooks.
+        ### Indeed, those pdfs might have ocr, but only after the first few
+        ### pages, and the other way round. So it's better to start scanning
+        #### longer pdfs from a more distant page number.
+
+        if self.num_pages <= treshold:
+            content = self.extract_content(first_page=1,
+                                           last_page=max_scanned_pages)
+        else:
+            content = self.extract_content(first_page=max_scanned_pages+1,
+                                           last_page=treshold)
+        print("--------------------------------------------------------------")
+        warning = "PDF compression, OCR, web optimization using \
 a watermarked evaluation copy of CVISION PDFCompressor\n\n"
-        content = self.extract_content(scanned_pages=scanned_pages,
-                                       length=len(warning))
-        if content.startswith(warning):
+        if content.decode('utf-8', 'ignore').startswith(warning):
+        ### This decoding is for python 3 portability reasons, as python 3
+        ### check_ouput returns bytes instead of a string. The 'ignore'
+        ### option is then used to prevent the UnicodeDecodeError that might
+        ### occur as the result of the 'content' bit-string being shortened
+        ### at the wrong place with the 'length' parameter.
             print(Fore.RED + warning + "\n")
-            print("Not accepted" + Fore.RESET)
             return
-        ### the re.UNICODE flag is needed for Python 2.7
-        return re.search('\w{4}', content, re.UNICODE)
+        l = test_length
+        if (len(content) <= 4*l or self.num_pages <= treshold):
+            ### Condition deals with the special case of small pdfs or pdfs
+            ### whose content can't be split into 4 parts of length l.
+            content = content.decode('utf-8', 'ignore')
+            return re.search('\w{4}', content, re.UNICODE)
+            ### the re.UNICODE flag is needed for Python 2.7
+
+        test_contents = [content[:l],
+                         content[l: 2*l],
+                         content[:-2*l],
+                         content[:-l]]
+        test_contents = (c.decode('utf-8', 'ignore') for c in test_contents)
+        print("Name : {} \n".format(self.name))
+        print("Number of Pages : {}".format(self.num_pages))
+
+        return all((re.search('\w{4}', c, re.UNICODE) for c in test_contents))
 
     def copy(self, output_dir):
         pdf_copy = os.path.join(output_dir, self.name)
@@ -49,14 +81,16 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
 
 class PDFScanner(object):
 
-    def __init__(self, scanned_pages):
-        self.scanned_pages = scanned_pages
+    def __init__(self, max_scanned_pages, test_length):
+        self.max_scanned_pages = max_scanned_pages
+        self.test_length = test_length
 
     def scan(self, target_dir, output_dir):
         for root, dirs, files in os.walk(target_dir):
             for goodfile in fnmatch.filter(files, '*.pdf'):
                 pdf = PDF(root, goodfile)
-                if not pdf.is_ocr(scanned_pages=self.scanned_pages):
+                if not pdf.is_ocr(max_scanned_pages=self.max_scanned_pages,
+                                  test_length=self.test_length):
                     print(Fore.RED + "Not accepted" + Fore.RESET)
                     pdf.copy(output_dir)
 
@@ -65,7 +99,8 @@ if __name__ == '__main__':
     start_time = time.time()
     import sys
     target_dir, output_dir = sys.argv[1:]
-    scanned_pages = 4
-    scanner = PDFScanner(scanned_pages=scanned_pages)
+    max_scanned_pages, test_length = 8, 100
+    scanner = PDFScanner(max_scanned_pages=max_scanned_pages,
+                         test_length=test_length)
     scanner.scan(target_dir, output_dir)
     print("--- {} seconds ---".format(time.time() - start_time))
