@@ -18,7 +18,7 @@ class PDF(object):
 
     def extract_content(self, scanned_pages=1, length=1):
         print("--------------------------------------------------------------")
-        cmd = ['pdftotext', '-l', str(scanned_pages), self.pathname,
+        cmd = ['pdftotext', '-q', '-l', str(scanned_pages), self.pathname,
                '/dev/stdout']
         content = subprocess.check_output(cmd)[:length]
         print("Name : {} \nContent: {}\n".format(self.name, repr(content)))
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     start_time = time.time()
     import sys
     target_dir, output_dir = sys.argv[1:]
-    scanned_pages = 15
+    scanned_pages = 4
     scanner = PDFScanner(scanned_pages=scanned_pages)
     scanner.scan(target_dir, output_dir)
     print("--- {} seconds ---".format(time.time() - start_time))
