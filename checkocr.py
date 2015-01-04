@@ -6,13 +6,19 @@ import shutil
 import fnmatch
 import time
 
-from colorama import Fore
 from PyPDF2 import PdfFileReader
+
+import warnings
+warnings.filterwarnings('ignore', module="PyPDF2")
+### supress PdfReadWarning from the PyPDF2.PdfFileReader module
+
+from colorama import Fore
 
 
 class PDF(PdfFileReader):
 
     def __init__(self, directory, name):
+        print("--------------------------------------------------------------")
         self.name = name
         self.directory = directory
         self.pathname = os.path.join(directory, name)
@@ -20,7 +26,8 @@ class PDF(PdfFileReader):
             super(self.__class__, self).__init__(self.pathname)
             self.num_pages = self.numPages
             # assign PdfFileReader.numPages to num_pages
-        except AssertionError:
+        except (AssertionError, ValueError) as e:
+            print(repr(e))
             self.num_pages = 0
 
     def extract_content(self, first_page, last_page):
@@ -45,7 +52,6 @@ class PDF(PdfFileReader):
         else:
             content = self.extract_content(first_page=2*max_scanned_pages+1,
                                            last_page=treshold)
-        print("--------------------------------------------------------------")
         warning = "PDF compression, OCR, web optimization using \
 a watermarked evaluation copy of CVISION PDFCompressor\n\n"
         if content.decode('utf-8', 'ignore').startswith(warning):
@@ -57,14 +63,14 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
             print(Fore.RED + warning + "\n")
             return
         l = test_length
-        if (len(content) <= 6*l or self.num_pages <= treshold):
+        if (len(content) <= 6*l or 0 < self.num_pages <= treshold):
             ### Condition deals with the special case of small pdfs or pdfs
             ### whose content can't be split into 6 parts of length l (even
             ### though they might have a high number of pages, which is typical
             ### of non-ocr ebooks).
             content = content.decode('utf-8', 'ignore')
-            print("Number of Pages : {}".format(self.num_pages))
             print("Name : {}\n".format(self.name))
+            print("Number of Pages : {}".format(self.num_pages))
             return re.search('[^\W\d_]{5}', content, re.UNICODE)
             ### the re.UNICODE flag is needed for Python 2.7
 
@@ -77,7 +83,6 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
         test_contents = (c.decode('utf-8', 'ignore') for c in test_contents)
         print("Name : {}\n".format(self.name))
         print("Number of Pages : {}".format(self.num_pages))
-
         return all((re.search('[^\W\d_]{3}', c, re.UNICODE)
                     for c in test_contents))
 
