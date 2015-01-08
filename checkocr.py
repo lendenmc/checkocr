@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 import os
 import fnmatch
@@ -61,7 +62,7 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
             return len(words_list)
 
     def make_junk_number(self):
-        junks = ["&", "+{", "{>", "+[", "@", "±", "%", "#", "¿"]
+        junks = [u"&", u"+{", u"{>", u"+[", u"@", u"±", u"%", u"#", u"¿"]
         if self.content:
             junk_number = sum([self.content.count(junk) for junk in junks])
             return junk_number
