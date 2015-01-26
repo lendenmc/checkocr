@@ -9,20 +9,26 @@ import shutil
 from colorama import Fore
 
 
-class PDF(object):
+class File(object):
 
-    def __init__(self, directory, name, pages):
+    def __init__(self, directory, name, extension, pages):
         self.name = name
         self.directory = directory
+        self.extension = extension
         self.pathname = os.path.join(directory, name)
         self.pages = pages
         self.content = self.make_content()
 
     def extract_content(self, first_page, last_page):
-        cmd = ['pdftotext', '-q',
-               '-f', str(first_page),
-               '-l', str(last_page),
-               self.pathname, '/dev/stdout']
+        if self.extension == "pdf":
+            cmd = ['pdftotext', '-q',
+                   '-f', str(first_page),
+                   '-l', str(last_page),
+                   self.pathname, '/dev/stdout']
+        if self.extension == "djvu":
+            cmd = ['djvutxt',
+                   '--page=' + str(first_page) + "-" + str(last_page),
+                   self.pathname]
         bytes_content = subprocess.check_output(cmd)
         content = bytes_content.decode('utf-8', 'ignore')
         # The use of decode is for python 3 portability reasons, as python 3
@@ -41,8 +47,11 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
                 content = self.extract_content(first_page=i*self.pages+1,
                                                last_page=(i+1)*self.pages)
             except subprocess.CalledProcessError:
+                print((i*self.pages+1, (i+1)*self.pages))
                 print(Fore.RED + "Too small !" + Fore.RESET)
                 continue
+            if self.extension == "djvu":
+                return content
             if content.startswith("\x0c"):
                 if content.startswith(treshold*"\x0c"):
                     print(Fore.RED + "Clear Cut !" + Fore.RESET)
@@ -54,11 +63,15 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
                 return
             break
         return content
+        # Since "content" can start with "\x0c" as first character and be then
+        # followed by perfectly valid characters , the "break/return content"
+        # combo is needed instead of a single "return content" at the end of an
+        # iteration (to prevent this case to return "None").
 
     def make_words_number(self):
         if self.content:
             words_list = re.findall('[^\W\d_]{6}', self.content, re.UNICODE)
-             # the re.UNICODE flag is needed for Python 2.7
+            # the re.UNICODE flag is needed for Python 2.7
             return len(words_list)
 
     def make_junk_number(self):
@@ -99,22 +112,27 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
         shutil.copyfile(self.pathname, pdf_copy)
 
 
-class PDFScanner(object):
+class Scanner(object):
 
     def __init__(self, scanned_pages):
         self.scanned_pages = scanned_pages
 
     def scan(self, target_dir, output_dir):
+        extensions = ['pdf',
+                      'djvu'
+                      ]
         for root, dirs, files in os.walk(target_dir):
-            for goodfile in fnmatch.filter(files, '*.pdf'):
-                print("-----------------------------------------------")
-                print("Name : {}".format(goodfile))
-                pdf = PDF(directory=root,
-                          name=goodfile,
-                          pages=self.scanned_pages)
-                if not pdf.is_ocr():
-                    print(Fore.RED + "Not accepted !" + Fore.RESET)
-                    pdf.copy(output_dir)
+            for extension in extensions:
+                for goodfile in fnmatch.filter(files, '*.' + extension):
+                    print("-----------------------------------------------")
+                    print("Name : {}".format(goodfile))
+                    scanned_file = File(directory=root,
+                                        name=goodfile,
+                                        extension=extension,
+                                        pages=self.scanned_pages)
+                    if not scanned_file.is_ocr():
+                        print(Fore.RED + "Not accepted !" + Fore.RESET)
+                        scanned_file.copy(output_dir)
 
 
 if __name__ == '__main__':
@@ -125,7 +143,7 @@ if __name__ == '__main__':
     target_dir, output_dir = sys.argv[1:]
     scanned_pages = 8
 
-    scanner = PDFScanner(scanned_pages=scanned_pages)
+    scanner = Scanner(scanned_pages=scanned_pages)
     scanner.scan(target_dir, output_dir)
 
     print("--- {} seconds ---".format(time.time() - start_time))
