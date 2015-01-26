@@ -100,7 +100,7 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
         return second_test
 
     def is_ocr(self):
-        if self.content is None:
+        if not self.content:
             return
         if self.is_junky():
             print(Fore.RED + "Too junky !" + Fore.RESET)
@@ -119,7 +119,7 @@ class Scanner(object):
 
     def scan(self, target_dir, output_dir):
         extensions = ['pdf',
-                      'djvu'
+                      # 'djvu',
                       ]
         for root, dirs, files in os.walk(target_dir):
             for extension in extensions:
