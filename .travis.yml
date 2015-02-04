@@ -1,7 +1,3 @@
-os:
-    - linux
-    - osx
-
 language: python
 env:
     - TOX_ENV=py26
