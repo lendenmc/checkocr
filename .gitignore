@@ -1,1 +1,3 @@
 *.pyc
+checkocr.egg-info/
+.tox/
