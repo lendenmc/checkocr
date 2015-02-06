@@ -8,6 +8,8 @@ import shutil
 
 from colorama import Fore
 
+scanned_pages = 8
+
 
 class File(object):
 
@@ -62,7 +64,10 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
                 print(Fore.RED + warning[:-2] + Fore.RESET)
                 return
             break
-        return content
+        try:
+            return content
+        except UnboundLocalError:
+            return
         # Since "content" can start with "\x0c" as first character and be then
         # followed by perfectly valid characters , the "break/return content"
         # combo is needed instead of a single "return content" at the end of an
@@ -141,7 +146,6 @@ if __name__ == '__main__':
 
     import sys
     target_dir, output_dir = sys.argv[1:]
-    scanned_pages = 8
 
     scanner = Scanner(scanned_pages=scanned_pages)
     scanner.scan(target_dir, output_dir)
