@@ -1,3 +1,4 @@
 *.pyc
 checkocr.egg-info/
 .tox/
+tests/pdf_files
