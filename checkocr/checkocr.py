@@ -78,6 +78,8 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
             words_list = re.findall('[^\W\d_]{6}', self.content, re.UNICODE)
             # the re.UNICODE flag is needed for Python 2.7
             return len(words_list)
+        else:
+            return 0
 
     def make_junk_number(self):
         junks = [u"&", u"+{", u"{>", u"+[", u"@", u"±", u" %",
@@ -85,6 +87,8 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
         if self.content:
             junk_number = sum([self.content.count(junk) for junk in junks])
             return junk_number
+        else:
+            return 0
 
     def is_wordy(self):
         words_number = self.make_words_number()
