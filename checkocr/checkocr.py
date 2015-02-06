@@ -68,10 +68,8 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
             return content
         except UnboundLocalError:
             return
-        # Since "content" can start with "\x0c" as first character and be then
-        # followed by perfectly valid characters , the "break/return content"
-        # combo is needed instead of a single "return content" at the end of an
-        # iteration (to prevent this case to return "None").
+        # This try-except block fix UnboundLocalError in case
+        # subprocess.CalledProcessErroor is raised on each and every iteration.
 
     def make_words_number(self):
         if self.content:
