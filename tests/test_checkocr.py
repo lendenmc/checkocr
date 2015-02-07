@@ -21,19 +21,16 @@ class TestIsNotJunky(unittest.TestCase):
     def setUp(self):
         self.directory = os.path.join(os.getcwd(),
                                       'tests/pdf_files/non_junky_files')
-        self.non_junky_files = fnmatch.filter(self.directory, '*.pdf')
-
+        self.non_junky_files = fnmatch.filter(os.listdir(self.directory),
+                                              '*.pdf')
         self.scanned_pages = checkocr.scanned_pages
 
     def test_is_not_junky(self):
-        for pdffile in self.non_junky_files:
-            filename = os.path.basename(pdffile)
+        for filename in self.non_junky_files:
             scanned_file = checkocr.File(directory=self.directory,
                                          name=filename,
                                          extension='pdf',
                                          pages=self.scanned_pages)
-            print(scanned_file.name)
-
             self.assertFalse(scanned_file.is_junky())
 
     def tearDown(self):
@@ -45,23 +42,20 @@ class TestIsJunky(unittest.TestCase):
     def setUp(self):
         self.directory = os.path.join(os.getcwd(),
                                       'tests/pdf_files/junky_files')
-        self.junky_files = fnmatch.filter(self.directory, '*.pdf')
-
+        self.junky_files = fnmatch.filter(os.listdir(self.directory),
+                                          '*.pdf')
         self.scanned_pages = checkocr.scanned_pages
 
     def test_is_junky(self):
-        for pdffile in self.junky_files:
-            filename = os.path.basename(pdffile)
+        for filename in self.junky_files:
             scanned_file = checkocr.File(directory=self.directory,
                                          name=filename,
                                          extension='pdf',
                                          pages=self.scanned_pages)
-
             self.assertTrue(scanned_file.is_junky())
 
     def tearDown(self):
         pass
-
 
 if __name__ == '__main__':
     unittest.main()
