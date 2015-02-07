@@ -6,8 +6,12 @@ env:
     - TOX_ENV=pypy
     - TOX_ENV=flake8
 
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install -y poppler-utils djvulibre-bin
+
 install:
-    - pip install tox coveralls
+    - sudo pip install tox coveralls
 
 script: 
     - tox -e $TOX_ENV
