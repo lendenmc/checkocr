@@ -78,8 +78,6 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
             words_list = re.findall('[^\W\d_]{6}', self.content, re.UNICODE)
             # the re.UNICODE flag is needed for Python 2.7
             return len(words_list)
-        else:
-            return 0
 
     def make_junk_number(self):
         junks = [u"&", u"+{", u"{>", u"+[", u"@", u"±", u" %",
@@ -87,26 +85,30 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
         if self.content:
             junk_number = sum([self.content.count(junk) for junk in junks])
             return junk_number
-        else:
-            return 0
 
     def is_wordy(self):
         words_number = self.make_words_number()
         words_limit = 15 * self.pages
 
-        return words_number > words_limit
+        if words_number is not None:
+            return words_number > words_limit
+        else:
+            return False
 
     def is_junky(self):
         junk_number = self.make_junk_number()
         upper_limit = 25 * self.pages
         lower_limit = 5 * self.pages
 
-        first_test = (junk_number > upper_limit)
-        if first_test:
-            return True
+        if junk_number is not None:
+            first_test = (junk_number > upper_limit)
+            if first_test:
+                return True
 
-        second_test = (junk_number > lower_limit and not self.is_wordy())
-        return second_test
+            second_test = (junk_number > lower_limit and not self.is_wordy())
+            return second_test
+        else:
+            return True
 
     def is_ocr(self):
         if not self.content:
