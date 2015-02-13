@@ -2,5 +2,5 @@
 checkocr.egg-info/
 .tox/
 __pycache__
-linux_env
-vagrant_shared_files
+linux_env/
+test_files/
