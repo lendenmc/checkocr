@@ -9,13 +9,21 @@ env:
 
 before_install:
     - brew update
+    - brew install pyenv
+    - pyenv install 2.7.9
+    - pyenv install 3.4.2
+    - pyenv install 3.3.6
+    - pyenv install 3.2.6
+    - pyenv install 2.6.9
+    - brew install pypy pypy3
     - brew install poppler djvulibre
     - brew outdated poppler || brew upgrade poppler
     - brew outdated djvulibre || brew upgrade djvulibre
-    - brew install python3
-    - brew install pypy pypy3
+
 install:
+    - pyenv local 3.4.2 3.3.6 3.2.6 2.7.9 2.6.9
     - sudo pip install tox coveralls
+    - pyenv rehash
 
 script: 
     - tox -e $TOX_ENV
