@@ -11,16 +11,18 @@ import shutil
 from colorama import Fore
 
 scanned_pages = 8
+extensions = ['pdf',
+              'djvu',
+              ]
 
 
 class File(object):
 
-    def __init__(self, directory, name, extension, pages):
+    def __init__(self, directory, name, extension):
         self.name = name
         self.directory = directory
         self.extension = extension
         self.pathname = os.path.join(directory, name)
-        self.pages = pages
         self.content = self.make_content()
 
     def extract_content(self, first_page, last_page):
@@ -45,13 +47,13 @@ class File(object):
     def make_content(self):
         warning = "PDF compression, OCR, web optimization using \
 a watermarked evaluation copy of CVISION PDFCompressor\n\n"
-        treshold = self.pages // 2
+        treshold = scanned_pages // 2
         for i in reversed(range(treshold)):
             try:
-                content = self.extract_content(first_page=i*self.pages+1,
-                                               last_page=(i+1)*self.pages)
+                content = self.extract_content(first_page=i*scanned_pages+1,
+                                               last_page=(i+1)*scanned_pages)
             except subprocess.CalledProcessError:
-                print((i*self.pages+1, (i+1)*self.pages))
+                print((i*scanned_pages+1, (i+1)*scanned_pages))
                 print(Fore.RED + "Too small !" + Fore.RESET)
                 continue
             if self.extension == "djvu":
@@ -88,7 +90,7 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
 
     def is_wordy(self):
         words_number = self.make_words_number()
-        words_limit = 15 * self.pages
+        words_limit = 15 * scanned_pages
 
         if words_number is not None:
             return words_number > words_limit
@@ -97,8 +99,8 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
 
     def is_junky(self):
         junk_number = self.make_junk_number()
-        upper_limit = 25 * self.pages
-        lower_limit = 5 * self.pages
+        upper_limit = 25 * scanned_pages
+        lower_limit = 5 * scanned_pages
 
         if junk_number is not None:
             first_test = (junk_number > upper_limit)
@@ -123,27 +125,18 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
         shutil.copyfile(self.pathname, pdf_copy)
 
 
-class Scanner(object):
-
-    def __init__(self, scanned_pages):
-        self.scanned_pages = scanned_pages
-
-    def scan(self, target_dir, output_dir):
-        extensions = ['pdf',
-                      'djvu',
-                      ]
-        for root, dirs, files in os.walk(target_dir):
-            for extension in extensions:
-                for goodfile in fnmatch.filter(files, '*.' + extension):
-                    print("-----------------------------------------------")
-                    print("Name : {}".format(goodfile))
-                    scanned_file = File(directory=root,
-                                        name=goodfile,
-                                        extension=extension,
-                                        pages=self.scanned_pages)
-                    if not scanned_file.is_ocr():
-                        print(Fore.RED + "Not accepted !" + Fore.RESET)
-                        scanned_file.copy(output_dir)
+def scan(target_dir, output_dir):
+    for root, dirs, files in os.walk(target_dir):
+        for extension in extensions:
+            for goodfile in fnmatch.filter(files, '*.' + extension):
+                print("-----------------------------------------------")
+                print("Name : {}".format(goodfile))
+                scanned_file = File(directory=root,
+                                    name=goodfile,
+                                    extension=extension)
+                if not scanned_file.is_ocr():
+                    print(Fore.RED + "Not accepted !" + Fore.RESET)
+                    scanned_file.copy(output_dir)
 
 
 if __name__ == '__main__':
@@ -152,8 +145,6 @@ if __name__ == '__main__':
 
     import sys
     target_dir, output_dir = sys.argv[1:]
-
-    scanner = Scanner(scanned_pages=scanned_pages)
-    scanner.scan(target_dir, output_dir)
+    scan(target_dir, output_dir)
 
     print("--- {} seconds ---".format(time.time() - start_time))
