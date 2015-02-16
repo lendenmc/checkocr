@@ -13,7 +13,7 @@ before_install:
     - brew outdated poppler || brew upgrade poppler
     - brew outdated djvulibre || brew upgrade djvulibre
     - brew install python3
-
+    - brew install pypy pypy3
 install:
     - sudo pip install tox coveralls
 
