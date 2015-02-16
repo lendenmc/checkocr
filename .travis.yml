@@ -10,7 +10,6 @@ env:
 
 before_install:
     - brew update
-    - brew install pyenv
     - pyenv install 2.7.9
     - pyenv install 3.4.2
     - pyenv install 3.3.6
