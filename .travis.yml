@@ -8,6 +8,7 @@ env:
 
 before_install:
     - brew update
+    - brew install poppler djvulibre
     - brew outdated poppler || brew upgrade poppler
     - brew outdated djvulibre || brew upgrade djvulibre
 
