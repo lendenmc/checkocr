@@ -4,3 +4,4 @@ checkocr.egg-info/
 __pycache__
 linux_env/
 test_files/
+tests/pdf2text.sh
