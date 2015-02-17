@@ -11,12 +11,7 @@ case "${TOX_ENV}" in
         curl -O https://bootstrap.pypa.io/get-pip.py
         sudo python get-pip.py
         ;;
-    py32)
-        brew upgrade pyenv
-        pyenv install 3.2.6
-        pyenv global 3.2.6
-        ;;
-    y33)
+    py33)
         brew upgrade pyenv
         pyenv install 3.3.6
         pyenv global 3.3.6
