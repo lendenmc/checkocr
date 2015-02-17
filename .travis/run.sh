@@ -8,4 +8,4 @@ eval "$(pyenv init -)"
 
 source ~/.venv/bin/activate
 
-tox
+tox -e $TOX_ENV
