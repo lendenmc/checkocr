@@ -6,7 +6,7 @@ set -x
 
 brew update
 
-case "${TOXENV}" in
+case "${TOX_ENV}" in
     py27)
         curl -O https://bootstrap.pypa.io/get-pip.py
         sudo python get-pip.py
