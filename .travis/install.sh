@@ -5,6 +5,7 @@ set -e
 set -x
 
 brew update
+brew install poppler djvulibre
 
 case "${TOX_ENV}" in
     py27)

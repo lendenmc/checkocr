@@ -8,12 +8,6 @@ env:
         - TOX_ENV=pypy3
         - TOX_ENV=flake8
 
-before_install:
-    - brew update
-    - brew install poppler djvulibre
-    - brew outdated poppler || brew upgrade poppler
-    - brew outdated djvulibre || brew upgrade djvulibre
-
 install:
     - ./.travis/install.sh
 
