@@ -4,7 +4,9 @@ set -e
 
 set -x
 
-eval "$(pyenv init -)"
+if which pyenv > /dev/null; then
+    eval "$(pyenv init -)"
+fi
 
 source ~/.venv/bin/activate
 
