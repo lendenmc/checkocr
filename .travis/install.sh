@@ -24,8 +24,8 @@ case "${TOX_ENV}" in
         ;;
     pypy)
         brew upgrade pyenv
-        pyenv install pypy-2.4.0
-        pyenv global pypy-2.4.0
+        pyenv install pypy-2.5.0
+        pyenv global pypy-2.5.0
         ;;
     pypy3)
         brew upgrade pyenv
