@@ -26,7 +26,7 @@ setup(
     long_description=readme,
     author="Chris Developer",
     author_email='chris@chrisdeveloper.com',
-    url='https://github.com/ChrisDeveloper/checkocr',
+    url='https://github.com/lendenmc/checkocr',
     packages=[
         'checkocr',
     ],
