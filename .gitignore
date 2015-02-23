@@ -6,3 +6,4 @@ linux_env/
 test_files/
 tests/pdf2text.sh
 .python-version
+.DS_Store
