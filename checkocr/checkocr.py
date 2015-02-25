@@ -48,6 +48,7 @@ class File(object):
         warning = "PDF compression, OCR, web optimization using \
 a watermarked evaluation copy of CVISION PDFCompressor\n\n"
         treshold = scanned_pages // 2
+        min_treshold = scanned_pages // 4
         for i in reversed(range(treshold)):
             try:
                 content = self.extract_content(first_page=i*scanned_pages+1,
@@ -58,8 +59,8 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
                 continue
             if self.extension == "djvu":
                 return content
-            if content.startswith("\x0c"):
-                if content.startswith(treshold*"\x0c"):
+            if content.endswith(min_treshold*"\x0c"):
+                if content.endswith(treshold*"\x0c"):
                     print(Fore.RED + "Clear Cut !" + Fore.RESET)
                     return
                 print(Fore.RED + "Too small !" + Fore.RESET)
