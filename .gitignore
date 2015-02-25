@@ -1,10 +1,10 @@
 *.pyc
-checkocr.egg-info/
-.tox/
-__pycache__
-linux_env/
-test_files/
-tests/pdf2text.sh
 .python-version
 .DS_Store
 .coverage
+tests/pdf2text.sh
+*.egg-info/
+.tox/
+__pycache__/
+linux_env/
+test_files/
