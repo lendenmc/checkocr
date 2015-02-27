@@ -10,25 +10,20 @@ Tests for `checkocr` module.
 from __future__ import print_function
 
 import unittest
-import os
-import fnmatch
+import glob
 
-from checkocr import checkocr
+from checkocr.checkocr import ScannedFile
 
 
 class TestIsNotJunky(unittest.TestCase):
 
     def setUp(self):
-        self.directory = os.path.join(os.getcwd(),
-                                      'tests/pdf_files/non_junky_files')
-        self.non_junky_files = fnmatch.filter(os.listdir(self.directory),
-                                              '*.pdf')
+        non_junky_files = 'tests/pdf_files/non_junky_files/*.pdf'
+        self.non_junky_files = glob.glob(non_junky_files)
 
     def test_is_not_junky(self):
-        for filename in self.non_junky_files:
-            scanned_file = checkocr.File(directory=self.directory,
-                                         name=filename,
-                                         extension='pdf')
+        for scanned_file in self.non_junky_files:
+            scanned_file = ScannedFile(scanned_file)
             self.assertFalse(scanned_file.is_junky())
 
     def tearDown(self):
@@ -38,16 +33,12 @@ class TestIsNotJunky(unittest.TestCase):
 class TestIsJunky(unittest.TestCase):
 
     def setUp(self):
-        self.directory = os.path.join(os.getcwd(),
-                                      'tests/pdf_files/junky_files')
-        self.junky_files = fnmatch.filter(os.listdir(self.directory),
-                                          '*.pdf')
+        junky_files = 'tests/pdf_files/junky_files/*.pdf'
+        self.junky_files = glob.glob(junky_files)
 
     def test_is_junky(self):
-        for filename in self.junky_files:
-            scanned_file = checkocr.File(directory=self.directory,
-                                         name=filename,
-                                         extension='pdf')
+        for scanned_file in self.junky_files:
+            scanned_file = ScannedFile(scanned_file)
             self.assertTrue(scanned_file.is_junky())
 
     def tearDown(self):
