@@ -15,7 +15,7 @@ import djvu
 
 
 _EXTENSIONS = ['pdf',
-               'djvu',
+               # 'djvu',
                ]
 
 
@@ -54,8 +54,8 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n",
             return len(words_list)
 
     def make_junk_number(self):
-        junks = [u"&", u"+{", u"{>", u"+[", u"@", u"±", u" %",
-                 u" $", u"#", u"¿"]
+        junks = [u'&', u'+{', u'{>', u'+[', u'@', u'±', u' %',
+                 u' $', u'#', u'¿']
         if self.sample:
             junk_number = sum([self.sample.count(junk) for junk in junks])
             return junk_number
@@ -86,28 +86,32 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n",
 
     def is_ocr(self):
         if not self.sample or self.has_prohibited():
-            print(Fore.RED + "Weird !" + Fore.RESET)
+            print(Fore.RED + 'Weird !' + Fore.RESET)
             return
         if self.is_junky():
-            print(Fore.RED + "Too junky !" + Fore.RESET)
+            print(Fore.RED + 'Too junky !' + Fore.RESET)
             return
         return re.search('[^\W\d_]{6}', self.sample, re.UNICODE)
 
     def copy(self, output_dir):
-        pdf_copy = os.path.join(output_dir, self.name)
-        shutil.copyfile(self.fullname, pdf_copy)
+        file_copy = os.path.join(output_dir, self.name)
+        try:
+            shutil.copyfile(self.fullname, file_copy)
+        except OSError as e:
+            print("{}\nDestionation folder is not writable.\n\
+Please change destionation folder.".format(e))
 
 
 def scan(target_dir, output_dir):
     for root, dirs, files in os.walk(target_dir):
         for extension in _EXTENSIONS:
             for goodfile in fnmatch.filter(files, '*.' + extension):
-                print("-----------------------------------------------")
+                print('-----------------------------------------------')
                 print("Name : {}".format(goodfile))
                 fullname = os.path.join(root, goodfile)
                 scanned_file = ScannedFile(fullname)
                 if not scanned_file.is_ocr():
-                    print(Fore.RED + "Not accepted !" + Fore.RESET)
+                    print(Fore.RED + 'Not accepted !' + Fore.RESET)
                     scanned_file.copy(output_dir)
 
 
@@ -119,4 +123,4 @@ if __name__ == '__main__':
     target_dir, output_dir = sys.argv[1:]
     scan(target_dir, output_dir)
 
-    print("--- {} seconds ---".format(time.time() - start_time))
+    print('--- {} seconds ---'.format(time.time() - start_time))
