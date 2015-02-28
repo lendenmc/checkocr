@@ -19,8 +19,8 @@ case "${TOX_ENV}" in
         ;;
     py34)
         brew upgrade pyenv
-        pyenv install 3.4.2
-        pyenv global 3.4.2
+        pyenv install 3.4.3
+        pyenv global 3.4.3
         ;;
     pypy)
         brew upgrade pyenv
