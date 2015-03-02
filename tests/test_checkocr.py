@@ -28,7 +28,7 @@ TESTS = {
          }
 
 
-class Test(object):
+class TestScannedFileMethod(object):
 
     def __init__(self, testcase):
         self.testcase = testcase
@@ -42,7 +42,7 @@ class Test(object):
 
         return files, method, test_fct
 
-    def test_method(self):
+    def run_test(self):
         files, method, test_fct = self.get_test_params()
 
         for scanned_file in files:
@@ -53,10 +53,10 @@ class Test(object):
 class TestIsNotJunky(unittest.TestCase):
 
     def setUp(self):
-        self.test = Test(self)
+        self.test = TestScannedFileMethod(self)
 
     def test_is_not_junky(self):
-        self.test.test_method()
+        self.test.run_test()
 
     def tearDown(self):
         pass
@@ -65,10 +65,10 @@ class TestIsNotJunky(unittest.TestCase):
 class TestIsJunky(unittest.TestCase):
 
     def setUp(self):
-        self.test = Test(self)
+        self.test = TestScannedFileMethod(self)
 
     def test_is_junky(self):
-        self.test.test_method()
+        self.test.run_test()
 
     def tearDown(self):
         pass
