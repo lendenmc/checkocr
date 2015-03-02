@@ -2,96 +2,67 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
+
 import os
 import fnmatch
-import subprocess
 import re
 import shutil
 
 from colorama import Fore
 
-scanned_pages = 8
-extensions = ['pdf',
-              'djvu',
-              ]
+import pdf
+import djvu
 
 
-class File(object):
+_EXTENSIONS = ['pdf',
+               # 'djvu',
+               ]
 
-    def __init__(self, directory, name, extension):
-        self.name = name
-        self.directory = directory
-        self.extension = extension
-        self.pathname = os.path.join(directory, name)
-        self.content = self.make_content()
 
-    def extract_content(self, first_page, last_page):
-        if self.extension == "pdf":
-            cmd = ['pdftotext', '-q',
-                   '-f', str(first_page),
-                   '-l', str(last_page),
-                   self.pathname, '/dev/stdout']
-        if self.extension == "djvu":
-            cmd = ['djvutxt',
-                   '--page=' + str(first_page) + "-" + str(last_page),
-                   self.pathname]
-        bytes_content = subprocess.check_output(cmd)
-        content = bytes_content.decode('utf-8', 'ignore')
-        # The use of decode is for python 3 portability reasons, as python 3
-        # check_ouput returns bytes instead of a string. The 'ignore'
-        # option is then used to prevent the UnicodeDecodeError that might
-        # occur as the result of the 'content' bit-string being shortened
-        # at the wrong place.
-        return content
+class ScannedFile(object):
 
-    def make_content(self):
-        warning = "PDF compression, OCR, web optimization using \
-a watermarked evaluation copy of CVISION PDFCompressor\n\n"
-        treshold = scanned_pages // 2
-        min_treshold = scanned_pages // 4
-        for i in reversed(range(treshold)):
-            try:
-                content = self.extract_content(first_page=i*scanned_pages+1,
-                                               last_page=(i+1)*scanned_pages)
-            except subprocess.CalledProcessError:
-                print((i*scanned_pages+1, (i+1)*scanned_pages))
-                print(Fore.RED + "Too small !" + Fore.RESET)
-                continue
-            if self.extension == "djvu":
-                return content
-            if content.endswith(min_treshold*"\x0c"):
-                if content.endswith(treshold*"\x0c"):
-                    print(Fore.RED + "Clear Cut !" + Fore.RESET)
-                    return
-                print(Fore.RED + "Too small !" + Fore.RESET)
-                continue
-            if content.startswith(warning):
-                print(Fore.RED + warning[:-2] + Fore.RESET)
-                return
-            break
-        try:
-            return content
-        except UnboundLocalError:
-            return
-        # This try-except block fix UnboundLocalError in case
-        # subprocess.CalledProcessErroor is raised on each and every iteration.
+    SCANNED_PAGES = 8
+
+    def __init__(self, fullname):
+        self.fullname = fullname
+        self.name = os.path.basename(fullname)
+        self.dirname = os.path.dirname(fullname)
+        self.extension = os.path.splitext(fullname)[1][1:]
+
+        self.sample = self.make_sample()
+
+    def make_sample(self):
+        if self.extension == 'pdf':
+            return pdf.make_sample(self.fullname, pages=self.SCANNED_PAGES)
+        elif self.extension == 'djvu':
+            return djvu.make_sample(self.fullname, pages=self.SCANNED_PAGES)
+
+    def has_prohibited(self):
+        prohibited = ["PDF compression, OCR, web optimization using \
+a watermarked evaluation copy of CVISION PDFCompressor\n\n",
+                      4*'\x0c',
+                      ]
+        if self.sample:
+            return any(self.sample.startswith(msg) for msg in prohibited)
+        else:
+            return False
 
     def make_words_number(self):
-        if self.content:
-            words_list = re.findall('[^\W\d_]{6}', self.content, re.UNICODE)
+        if self.sample:
+            words_list = re.findall('[^\W\d_]{6}', self.sample, re.UNICODE)
             # the re.UNICODE flag is needed for Python 2.7
             return len(words_list)
 
     def make_junk_number(self):
-        junks = [u"&", u"+{", u"{>", u"+[", u"@", u"±", u" %",
-                 u" $", u"#", u"¿"]
-        if self.content:
-            junk_number = sum([self.content.count(junk) for junk in junks])
+        junks = [u'&', u'+{', u'{>', u'+[', u'@', u'±', u' %',
+                 u' $', u'#', u'¿']
+        if self.sample:
+            junk_number = sum([self.sample.count(junk) for junk in junks])
             return junk_number
 
     def is_wordy(self):
         words_number = self.make_words_number()
-        words_limit = 15 * scanned_pages
+        words_limit = 15 * self.SCANNED_PAGES
 
         if words_number is not None:
             return words_number > words_limit
@@ -100,8 +71,8 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
 
     def is_junky(self):
         junk_number = self.make_junk_number()
-        upper_limit = 25 * scanned_pages
-        lower_limit = 5 * scanned_pages
+        upper_limit = 25 * self.SCANNED_PAGES
+        lower_limit = 5 * self.SCANNED_PAGES
 
         if junk_number is not None:
             first_test = (junk_number > upper_limit)
@@ -111,32 +82,36 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n"
             second_test = (junk_number > lower_limit and not self.is_wordy())
             return second_test
         else:
-            return True
+            return False
 
     def is_ocr(self):
-        if not self.content:
+        if not self.sample or self.has_prohibited():
+            print(Fore.RED + 'Weird !' + Fore.RESET)
             return
         if self.is_junky():
-            print(Fore.RED + "Too junky !" + Fore.RESET)
+            print(Fore.RED + 'Too junky !' + Fore.RESET)
             return
-        return re.search('[^\W\d_]{6}', self.content, re.UNICODE)
+        return re.search('[^\W\d_]{6}', self.sample, re.UNICODE)
 
     def copy(self, output_dir):
-        pdf_copy = os.path.join(output_dir, self.name)
-        shutil.copyfile(self.pathname, pdf_copy)
+        file_copy = os.path.join(output_dir, self.name)
+        try:
+            shutil.copyfile(self.fullname, file_copy)
+        except OSError as e:
+            print("{}\nDestionation folder is not writable.\n\
+Please change destionation folder.".format(e))
 
 
 def scan(target_dir, output_dir):
     for root, dirs, files in os.walk(target_dir):
-        for extension in extensions:
+        for extension in _EXTENSIONS:
             for goodfile in fnmatch.filter(files, '*.' + extension):
-                print("-----------------------------------------------")
+                print('-----------------------------------------------')
                 print("Name : {}".format(goodfile))
-                scanned_file = File(directory=root,
-                                    name=goodfile,
-                                    extension=extension)
+                fullname = os.path.join(root, goodfile)
+                scanned_file = ScannedFile(fullname)
                 if not scanned_file.is_ocr():
-                    print(Fore.RED + "Not accepted !" + Fore.RESET)
+                    print(Fore.RED + 'Not accepted !' + Fore.RESET)
                     scanned_file.copy(output_dir)
 
 
@@ -148,4 +123,4 @@ if __name__ == '__main__':
     target_dir, output_dir = sys.argv[1:]
     scan(target_dir, output_dir)
 
-    print("--- {} seconds ---".format(time.time() - start_time))
+    print('--- {} seconds ---'.format(time.time() - start_time))
