@@ -14,17 +14,49 @@ import glob
 
 from checkocr.checkocr import ScannedFile
 
+TESTS = {
+        'TestIsNotJunky': {
+                           'files': 'tests/pdf_files/non_junky_files/*.pdf',
+                           'method': 'is_junky',
+                           'test_fct': 'assertFalse',
+                          },
+        'TestIsJunky': {
+                        'files': 'tests/pdf_files/junky_files/*.pdf',
+                        'method': 'is_junky',
+                        'test_fct': 'assertTrue',
+                       },
+         }
+
+
+class Test(object):
+
+    def __init__(self, testcase):
+        self.testcase = testcase
+        self.name = self.testcase.__class__.__name__
+        self.params = TESTS[self.name]
+
+    def get_test_params(self):
+        files = glob.glob(self.params['files'])
+        method = self.params['method']
+        test_fct = getattr(self.testcase, self.params['test_fct'])
+
+        return files, method, test_fct
+
+    def test_method(self):
+        files, method, test_fct = self.get_test_params()
+
+        for scanned_file in files:
+            scanned_file = ScannedFile(scanned_file)
+            test_fct(getattr(scanned_file, method)())
+
 
 class TestIsNotJunky(unittest.TestCase):
 
     def setUp(self):
-        non_junky_files = 'tests/pdf_files/non_junky_files/*.pdf'
-        self.non_junky_files = glob.glob(non_junky_files)
+        self.test = Test(self)
 
     def test_is_not_junky(self):
-        for scanned_file in self.non_junky_files:
-            scanned_file = ScannedFile(scanned_file)
-            self.assertFalse(scanned_file.is_junky())
+        self.test.test_method()
 
     def tearDown(self):
         pass
@@ -33,16 +65,14 @@ class TestIsNotJunky(unittest.TestCase):
 class TestIsJunky(unittest.TestCase):
 
     def setUp(self):
-        junky_files = 'tests/pdf_files/junky_files/*.pdf'
-        self.junky_files = glob.glob(junky_files)
+        self.test = Test(self)
 
     def test_is_junky(self):
-        for scanned_file in self.junky_files:
-            scanned_file = ScannedFile(scanned_file)
-            self.assertTrue(scanned_file.is_junky())
+        self.test.test_method()
 
     def tearDown(self):
         pass
+
 
 if __name__ == '__main__':
     unittest.main()
