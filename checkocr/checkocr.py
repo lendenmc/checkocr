@@ -12,8 +12,8 @@ import sys
 
 from colorama import Fore
 
-import pdf
-import djvu
+from pdf import make_sample as make_pdf_sample
+from djvu import make_sample as make_djvu_sample
 
 
 _EXTENSIONS = ['pdf',
@@ -35,15 +35,14 @@ class ScannedFile(object):
 
     def make_sample(self):
         if self.extension == 'pdf':
-            return pdf.make_sample(self.fullname, pages=self.SCANNED_PAGES)
+            return make_pdf_sample(self.fullname, pages=self.SCANNED_PAGES)
         elif self.extension == 'djvu':
-            return djvu.make_sample(self.fullname, pages=self.SCANNED_PAGES)
+            return make_djvu_sample(self.fullname, pages=self.SCANNED_PAGES)
 
     def has_prohibited(self):
         prohibited = ["PDF compression, OCR, web optimization using \
 a watermarked evaluation copy of CVISION PDFCompressor\n\n",
-                      4*'\x0c',
-                      ]
+                      4*'\x0c']
         if self.sample:
             return any(self.sample.startswith(msg) for msg in prohibited)
         else:
@@ -51,7 +50,7 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n",
 
     def make_words_number(self):
         if self.sample:
-            words_list = re.findall('[^\W\d_]{6}', self.sample, re.UNICODE)
+            words_list = re.findall(r'[^\W\d_]{6}', self.sample, re.UNICODE)
             # the re.UNICODE flag is needed for Python 2.7
             return len(words_list)
 
@@ -93,19 +92,19 @@ a watermarked evaluation copy of CVISION PDFCompressor\n\n",
         if self.is_junky():
             print(Fore.RED + 'Too junky !' + Fore.RESET)
             return
-        return re.search('[^\W\d_]{6}', self.sample, re.UNICODE)
+        return re.search(r'[^\W\d_]{6}', self.sample, re.UNICODE)
 
     def copy(self, output_dir):
         file_copy = os.path.join(output_dir, self.name)
         try:
             shutil.copyfile(self.fullname, file_copy)
-        except OSError as e:
+        except OSError as error:
             print("{}\nDestionation folder is not writable.\n\
-Please change destionation folder.".format(e))
+Please change destionation folder.".format(error))
 
 
 def scan(target_dir, output_dir):
-    for root, dirs, files in os.walk(target_dir):
+    for root, _, files in os.walk(target_dir):
         for extension in _EXTENSIONS:
             for goodfile in fnmatch.filter(files, '*.' + extension):
                 print('-----------------------------------------------')
@@ -123,6 +122,6 @@ def main():
 
 
 if __name__ == '__main__':
-    start_time = time.time()
+    START_TIME = time.time()
     main()
-    print('--- {} seconds ---'.format(time.time() - start_time))
+    print('--- {} seconds ---'.format(time.time() - START_TIME))
