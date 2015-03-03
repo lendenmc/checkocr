@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from utils import get_subprocess_output
+from __future__ import absolute_import
+
+from checkocr.utils import get_subprocess_output
 
 
 def get_content(pdffile, first_page, last_page):

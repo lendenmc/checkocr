@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 import os
 import fnmatch
@@ -12,8 +12,8 @@ import sys
 
 from colorama import Fore
 
-from pdf import make_sample as make_pdf_sample
-from djvu import make_sample as make_djvu_sample
+from checkocr.pdf import make_sample as make_pdf_sample
+from checkocr.djvu import make_sample as make_djvu_sample
 
 
 _EXTENSIONS = ['pdf',
