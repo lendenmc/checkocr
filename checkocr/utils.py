@@ -10,10 +10,7 @@ def get_subprocess_output(command):
     except CalledProcessError:
         return
 
-    content = bytes_content.decode('utf-8', 'ignore')
+    content = bytes_content.decode('utf-8')
     # The use of decode is for python 3 portability reasons, as python 3
-    # check_ouput returns bytes instead of a string. The 'ignore'
-    # option is then used to prevent the UnicodeDecodeError that might
-    # occur as the result of the 'content' bit-string being shortened
-    # at the wrong place.
+    # check_ouput returns bytes instead of a string.
     return content
