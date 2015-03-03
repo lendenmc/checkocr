@@ -1,4 +1,4 @@
-import subprocess
+from utils import get_subprocess_output
 
 
 def get_content(pdffile, first_page, last_page):
@@ -7,18 +7,7 @@ def get_content(pdffile, first_page, last_page):
                '-l', str(last_page),
                pdffile, '/dev/stdout']
 
-    try:
-        bytes_content = subprocess.check_output(command)
-    except subprocess.CalledProcessError:
-        return
-
-    content = bytes_content.decode('utf-8', 'ignore')
-    # The use of decode is for python 3 portability reasons, as python 3
-    # check_ouput returns bytes instead of a string. The 'ignore'
-    # option is then used to prevent the UnicodeDecodeError that might
-    # occur as the result of the 'content' bit-string being shortened
-    # at the wrong place.
-    return content
+    return get_subprocess_output(command)
 
 
 def make_sample(pdffile, pages=8, max_iterations=4):
