@@ -7,6 +7,8 @@ import os
 import fnmatch
 import re
 import shutil
+import time
+import sys
 
 from colorama import Fore
 
@@ -115,12 +117,12 @@ def scan(target_dir, output_dir):
                     scanned_file.copy(output_dir)
 
 
-if __name__ == '__main__':
-    import time
-    start_time = time.time()
-
-    import sys
+def main():
     target_dir, output_dir = sys.argv[1:]
     scan(target_dir, output_dir)
 
+
+if __name__ == '__main__':
+    start_time = time.time()
+    main()
     print('--- {} seconds ---'.format(time.time() - start_time))
